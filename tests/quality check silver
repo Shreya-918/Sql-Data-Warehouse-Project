@@ -1,0 +1,68 @@
+/* 1]DATA DUPLICATION AND NULL VALUE  */
+
+SELECT 
+cst_id,
+COUNT(*)
+FROM bronze.crm_cust_info
+GROUP BY cst_id
+HAVING COUNT(cst_id)>1 OR cst_id IS NULL;
+
+/*2] QUALITY CHECK :DETECT UNWANTED SPACES ON (string column)*/
+
+SELECT cst_firstname 
+FROM bronze.crm_cust_info
+WHERE cst_firstname !=TRIM(cst_firstname);
+/* this specify firstname has unwanted spaces and like wise in lastname also have unwanted spaces */
+
+/* 3]Data Standardization & Consistency */
+SELECT DISTINCT cst_gndr
+FROM bronze.crm_cust_info;
+
+/* 4] NEGATIVE Cost value and null */
+SELECT prd_cost 
+FROM bronze.crm_prd_info 
+WHERE prd_cost<0 OR prd_cost IS NULL;
+
+/* 5] check for invaild dates [end date should be greater 0R END DATE is start date of next record]*/
+SELECT * 
+FROM bronze.crm_prd_info 
+WHERE prd_start_dt>prd_end_dt;
+
+SELECT 
+NULLIF(sls_ship_dt,0) sls_order_dt
+FROM bronze.crm_sales_details
+WHERE sls_ship_dt<=0
+OR LEN(sls_ship_dt)!=8
+OR sls_ship_dt>20500101
+OR sls_ship_dt<1900101
+
+/* 6] check data consistency between sales price & quantity */
+--sales=quantity * price
+-- values should not negative null and zero
+
+SELECT 
+sls_sales ,
+sls_quantity ,
+sls_price  
+FROM bronze.crm_sales_details
+WHERE sls_sales !=sls_quantity *sls_price  
+OR sls_sales IS NULL OR sls_quantity IS NULL OR sls_price  IS NULL
+OR sls_sales<=0 OR sls_quantity<=0 OR sls_price  <=0
+ORDER BY sls_sales ,sls_quantity,sls_price  
+
+SELECT * FROM silver.crm_sales_details
+
+/*7] Identify out of range date */
+SELECT 
+bdate
+FROM  bronze.erp_cust_az12
+WHERE bdate>getdate() OR bdate<'1924-01-01'
+
+/* 8] DATA STANDARDIZATION */
+SELECT 
+DISTINCT 
+gen
+FROM bronze.erp_cust_az12
+
+SELECT * FROM silver.erp_cust_az12
+
